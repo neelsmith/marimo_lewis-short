@@ -20,28 +20,47 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _(mo, search_in, use_accordion):
     mo.md(f"""
     /// admonition | Search settings
 
+    *Search in* {search_in}
 
+    *Format results as folding blocks* {use_accordion}
     ///
     """)
     return
 
 
 @app.cell(hide_code=True)
-def _(mo, search, search_in):
-    mo.md(f"*Search for* {search} *in* {search_in}")
+def _(mo, search):
+    mo.md(f"""
+    *Search for* {search}
+    """)
     return
 
 
 @app.cell(hide_code=True)
-def _(formatresults, mo, results):
-    mo.md(f"""
-    {formatresults(results)} 
+def _(mo, results, search):
+    hdr = ""
+    if len(results) == 1:
+        hdr = f"## 1 result matching `{search.value}`"
+    else:
+        hdr = f"## {len(results)} results matching `{search.value}`"
 
-    """)
+    mo.md(hdr)    
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(formatdict, formatresults, mo, results, use_accordion):
+    resultsdisplay = None
+    if use_accordion.value:
+        resultsdisplay = mo.accordion(formatdict(results))
+    else:
+        resultsdisplay = mo.md(f"""{formatresults(results)}""")
+    resultsdisplay    
     return
 
 
@@ -79,6 +98,12 @@ def _(mo):
     return (search_in,)
 
 
+@app.cell
+def _(mo):
+    use_accordion = mo.ui.checkbox()
+    return (use_accordion,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
@@ -101,7 +126,7 @@ def _():
 def _(colnames, search, search_in):
     def formatresults(results):
         if results.is_empty():
-            return f"*No matches for* {search.value} *in* {colnames[search_in.value]}."
+            return f"*No matches for* `{search.value}` *in column* `{colnames[search_in.value]}`."
 
         formatted = []
         for row in results.iter_rows(named=True):
@@ -115,6 +140,27 @@ def _(colnames, search, search_in):
     return (formatresults,)
 
 
+@app.cell
+def _(mo, results):
+    def formatdict(reslts):
+        if results.is_empty():
+            return dict()
+
+        articles = {}
+        for row in reslts.iter_rows(named=True):
+            lemma = row.get("key", "")
+            urn = row.get("urn", "")
+            text = row.get("entry", "")
+            displaystring = f"`{urn}`\n\n{text}"
+        
+            articles[lemma] = mo.md(displaystring)
+
+        return articles
+    
+
+    return (formatdict,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
@@ -126,13 +172,11 @@ def _(mo):
 @app.cell
 def _(colnames, df, pl, search, search_in):
     if not search.value:
-        results = df
+        results = pl.DataFrame()
     else:
         results = df.filter(
             pl.col(colnames[search_in.value]).str.contains(search.value)
         )
-
-
     return (results,)
 
 
