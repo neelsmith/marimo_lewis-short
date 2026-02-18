@@ -1,2 +1,4 @@
 # marimo_lewis-short
-Lexica for Greek and Latin  in marimo notebooks
+
+Lewis and Short's *Latin Dictionary* in a marimo notebook.
+
