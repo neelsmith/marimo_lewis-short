@@ -21,9 +21,11 @@ def _():
 
 @app.cell(hide_code=True)
 def _(about, mo):
-    mo.md(f"""
-    {about} *About this notebook (including credits info)*
-    """)
+    mo.hstack([
+        mo.md("Notebook version: **1.0.0**"),
+        mo.md("  "),
+        mo.md(f"{about} *About this notebook (including credits info)*")
+    ],justify="center",gap=1.8)
     return
 
 
@@ -32,7 +34,7 @@ def _(about, mo):
     credits = None
     if about.value:
         credits = mo.md(f"""## About this notebook
-    *Version*: **1.0.0**
+
 
     ### Motivation
 
